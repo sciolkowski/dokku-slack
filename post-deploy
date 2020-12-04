@@ -11,14 +11,38 @@ if [[ -f "$DOKKU_ROOT/$APP/SLACK_URL" || -f "$DOKKU_ROOT/SLACK_URL" ]]; then
   LAST_COMMIT=$(dokku config:get $APP GIT_REV)
   GITHUB_REPO=$(dokku config:get $APP GITHUB_REPO_URL)
   SLACK_URL=$(cat "$DOKKU_ROOT/$APP/SLACK_URL" 2> /dev/null || cat "$DOKKU_ROOT/SLACK_URL" 2> /dev/null)
-  SLACK_JSON="{ \
-    \"attachments\": [{ \
-      \"text\": \"Deployed $APP to $HOSTNAME, last commit: $GITHUB_REPO/commits/$LAST_COMMIT, available at $URL\", \
-      \"fallback\": \"Deployed $APP to $HOSTNAME, last commit: $GITHUB_REPO/commits/$LAST_COMMIT, available at $URL\", \
-      \"color\": \"good\", \
-      \"mrkdwn_in\": [\"text\"] \
-    }] \
-  }"
+  SLACK_JSON="{
+	\"blocks\": [
+		{
+			\"type\": \"header\",
+			\"text\": {
+				\"type\": \"plain_text\",
+				\"text\": \"$HOSTNAME\",
+				\"emoji\": true
+			}
+		},
+		{
+			\"type\": \"divider\"
+		},
+		{
+			\"type\": \"section\",
+			\"text\": {
+				\"type\": \"mrkdwn\",
+				\"text\": \":rocket: *$APP* was just deployed\"
+			}
+		},
+		{
+			\"type\": \"section\",
+			\"text\": {
+				\"type\": \"mrkdwn\",
+				\"text\": \"Last commit: <$GITHUB_REPO/commits/$LAST_COMMIT|Click here> \\n Application available at: <$URL|$URL>\"
+			}
+		},
+		{
+			\"type\": \"divider\"
+		}
+	]
+}"
   SLACK_RESULT=$(curl -s -d "payload=$SLACK_JSON" "${SLACK_URL}" -w "%{http_code}")
   echo "       ${SLACK_RESULT}"
 fi
