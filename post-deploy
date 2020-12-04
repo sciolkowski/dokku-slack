@@ -3,16 +3,18 @@ set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 
 APP="$1"
 IMAGE="$2"
-HOSTNAME=$(hostname -f)
+HOSTNAME=$(hostname)
 
 if [[ -f "$DOKKU_ROOT/$APP/SLACK_URL" || -f "$DOKKU_ROOT/SLACK_URL" ]]; then
   echo "-----> Notifying Slack ..."
   URL=$(dokku url $APP)
+  LAST_COMMIT=$(dokku config:get $APP GIT_REV)
+  GITHUB_REPO=$(dokku config:get $APP GITHUB_REPO_URL)
   SLACK_URL=$(cat "$DOKKU_ROOT/$APP/SLACK_URL" 2> /dev/null || cat "$DOKKU_ROOT/SLACK_URL" 2> /dev/null)
   SLACK_JSON="{ \
     \"attachments\": [{ \
-      \"text\": \"Deployed $APP to $HOSTNAME via $URL\", \
-      \"fallback\": \"Deployed $APP to $HOSTNAME via $URL\", \
+      \"text\": \"Deployed $APP to $HOSTNAME, last commit: $GITHUB_REPO/commits/$LAST_COMMIT, available at $URL\", \
+      \"fallback\": \"Deployed $APP to $HOSTNAME, last commit: $GITHUB_REPO/commits/$LAST_COMMIT, available at $URL\", \
       \"color\": \"good\", \
       \"mrkdwn_in\": [\"text\"] \
     }] \
